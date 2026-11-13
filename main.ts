@@ -303,7 +303,7 @@ function shadeFloor(x, y, out) {
   const bd = beastDistance(x, y);
   if (bd < 40) {
     const reach = clamp(Math.hypot(x - LIGHT_X, y - LIGHT_Y) / 700, 0, 1);
-    const a2 = cover(bd, 4 + 8 * reach);
+    const a2 = cover(bd, 7 + 16 * reach);
     if (a2 > 0) {
       const k = 1 - a2 * (0.92 - 0.24 * reach);
       out[0] *= k;
@@ -437,12 +437,12 @@ function shade(px, py, out) {
       const left = catSdf(lx - 2.2, ly) - catSdf(lx, ly);
       const up = catSdf(lx, ly - 2.2) - catSdf(lx, ly);
       const rim = clamp(1 - Math.abs(cd) / 6.5, 0, 1) * clamp(0.55 + left * 1.1 + up * 0.5, 0, 1.6);
-      out[0] = out[0] * (1 - ca) + ca * 0.035;
-      out[1] = out[1] * (1 - ca) + ca * 0.030;
-      out[2] = out[2] * (1 - ca) + ca * 0.042;
-      out[0] += rim * 0.78;
-      out[1] += rim * 0.52;
-      out[2] += rim * 0.25;
+      out[0] = out[0] * (1 - ca) + ca * 0.020;
+      out[1] = out[1] * (1 - ca) + ca * 0.018;
+      out[2] = out[2] * (1 - ca) + ca * 0.026;
+      out[0] += rim * 0.62;
+      out[1] += rim * 0.42;
+      out[2] += rim * 0.20;
       covTmp[0] = Math.max(covTmp[0], ca);
     }
   }
