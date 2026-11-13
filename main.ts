@@ -17,6 +17,13 @@ const W = SIZE * SS;
 const H = SIZE * SS;
 const OUT = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
+// the whole scene is framed a little closer, so the doorway and the cat fill more of the picture
+const ZOOM = 1.16;
+const CX = 512;
+const CY = 690;
+const sceneX = (v) => CX + (v - CX) / ZOOM;
+const sceneY = (v) => CY + (v - CY) / ZOOM;
+
 /* ------------------------------------------------------------------ *
  * Deterministic noise
  * ------------------------------------------------------------------ */
@@ -228,8 +235,8 @@ const stars = [];
 for (let i = 0; i < 620; i++) {
   const r = 0.7 + Math.pow(rnd(), 2.6) * 2.1;
   stars.push({
-    x: rnd() * W,
-    y: Math.pow(rnd(), 0.72) * HORIZON * SS,
+    x: sceneX(rnd() * SIZE) * SS,
+    y: sceneY(Math.pow(rnd(), 0.72) * HORIZON) * SS,
     r,
     b: 0.10 + Math.pow(rnd(), 2.4) * 1.05,
     tint: rnd(),
@@ -244,7 +251,7 @@ for (let i = 0; i < 170; i++) {
   const x = (OPEN_L + LEAF_FREE_X) / 2 + (rnd() - 0.4) * (60 + t * 620);
   const y = 660 + t * 340 + (rnd() - 0.5) * 80;
   if (x < 90 || x > 950 || y > 1006) continue;
-  motes.push({ x: x * SS, y: y * SS, r: 0.8 + rnd() * 2.4, b: 0.15 + rnd() * 0.7 });
+  motes.push({ x: sceneX(x) * SS, y: sceneY(y) * SS, r: 0.8 + rnd() * 2.4, b: 0.15 + rnd() * 0.7 });
 }
 
 /* ------------------------------------------------------------------ *
@@ -281,7 +288,7 @@ function shadeFloor(x, y, out) {
     const t = clamp(dy / 300, 0, 1);
     const halfW = 34 + 900 * Math.pow(t, 1.08);
     const arm = 1 - clamp(Math.abs(x - (apexX + 150 * t)) / halfW, 0, 1);
-    const s = Math.pow(arm, 1.8) * Math.exp(-t * 1.35) * 2.5;
+    const s = Math.pow(arm, 1.8) * Math.exp(-t * 1.3) * 2.9;
     const along = clamp((x - OPEN_L + 40) / 260, 0, 1);
     out[0] += s * (0.62 + 0.42 * along);
     out[1] += s * (0.40 + 0.30 * along);
@@ -305,10 +312,23 @@ function shadeFloor(x, y, out) {
     const reach = clamp(Math.hypot(x - LIGHT_X, y - LIGHT_Y) / 700, 0, 1);
     const a2 = cover(bd, 7 + 16 * reach);
     if (a2 > 0) {
-      const k = 1 - a2 * (0.92 - 0.24 * reach);
+      const k = 1 - a2 * (0.90 - 0.24 * reach);
       out[0] *= k;
       out[1] *= k * 0.995;
       out[2] *= k * 0.98;
+      // the shadow is a window of its own: a few small stars lie inside it
+      const gx = Math.floor(x / 26);
+      const gy = Math.floor(y / 26);
+      const h = hash2(gx * 7 + 13, gy * 11 + 5);
+      if (h < 0.30) {
+        const sxp = (gx + hash2(gx + 91, gy + 17)) * 26;
+        const syp = (gy + hash2(gy + 43, gx + 71)) * 26;
+        const dd = Math.hypot(x - sxp, y - syp);
+        const a = Math.exp(-(dd * dd) / 3.4) * (0.25 + 0.55 * h * 3);
+        out[0] += a * a2 * 0.75;
+        out[1] += a * a2 * 0.80;
+        out[2] += a * a2 * 0.95;
+      }
     }
   }
 }
@@ -387,8 +407,8 @@ const tmp = [0, 0, 0];
 const covTmp = [0];
 
 function shade(px, py, out) {
-  const x = px / SS;
-  const y = py / SS;
+  const x = sceneX(px / SS);
+  const y = sceneY(py / SS);
 
   if (y < HORIZON) {
     const t = clamp((HORIZON - y) / HORIZON, 0, 1);
